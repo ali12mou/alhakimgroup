@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   CheckCircle2,
   Eye,
@@ -23,11 +24,11 @@ type DepensesPageProps = {
   banks: Bank[];
 };
 
-const subNav: Array<{ key: DepensesSubTab; label: string; icon: typeof Receipt }> = [
-  { key: "categorie", label: "Categorie depense", icon: FolderTree },
-  { key: "depense", label: "Depense", icon: Receipt },
-  { key: "allocation", label: "Allocation des depenses", icon: PieChart },
-  { key: "autres", label: "Autres depenses", icon: Layers }
+const subNavKeys: Array<{ key: DepensesSubTab; labelKey: string; icon: typeof Receipt }> = [
+  { key: "categorie", labelKey: "expenses.category", icon: FolderTree },
+  { key: "depense", labelKey: "expenses.title", icon: Receipt },
+  { key: "allocation", labelKey: "expenses.allocation", icon: PieChart },
+  { key: "autres", labelKey: "expenses.other", icon: Layers }
 ];
 
 function formatDjf(amount: number) {
@@ -940,17 +941,18 @@ function AutresDepensesView() {
 }
 
 export default function DepensesPage({ sub, onSubChange, banks }: DepensesPageProps) {
+  const { t } = useTranslation();
   return (
     <section className="settings-page depenses-page">
       <header className="settings-page-header">
         <div>
-          <h1>Depenses</h1>
-          <p>Categories, depenses courantes, allocations analytiques et postes exceptionnels.</p>
+          <h1>{t("expenses.title")}</h1>
+          <p>{t("expenses.title")}</p>
         </div>
       </header>
 
-      <nav className="settings-subnav" aria-label="Sous-menus depenses">
-        {subNav.map((item) => {
+      <nav className="settings-subnav" aria-label={t("expenses.title")}>
+        {subNavKeys.map((item) => {
           const Icon = item.icon;
           return (
             <button
@@ -960,7 +962,7 @@ export default function DepensesPage({ sub, onSubChange, banks }: DepensesPagePr
               onClick={() => onSubChange(item.key)}
             >
               <Icon size={16} />
-              {item.label}
+              {t(item.labelKey)}
             </button>
           );
         })}

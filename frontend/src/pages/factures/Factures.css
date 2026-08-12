@@ -340,12 +340,74 @@
   color: #4338ca;
 }
 
+.invoice-form-totals {
+  margin-top: 1rem;
+  margin-left: auto;
+  width: min(100%, 320px);
+  background: #f8fafc;
+  border: 1px solid var(--inv-border);
+  border-radius: 12px;
+  padding: 0.85rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.invoice-form-totals-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  font-size: 0.9rem;
+  color: var(--inv-muted);
+}
+
+.invoice-form-totals-row strong {
+  color: var(--inv-text);
+  font-variant-numeric: tabular-nums;
+}
+
+.invoice-form-totals-row--net {
+  margin-top: 0.25rem;
+  padding-top: 0.55rem;
+  border-top: 1px solid var(--inv-border);
+  color: var(--brand-navy);
+  font-weight: 700;
+}
+
+.invoice-form-totals-row--net strong {
+  color: var(--brand-navy);
+  font-size: 1.05rem;
+}
+
+.invoice-remise-hint {
+  margin-top: 0.2rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #b45309;
+}
+
 .invoice-actions-cell {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   gap: 0.5rem;
   min-width: 200px;
+}
+
+.invoice-actions-cell--compact {
+  min-width: 0;
+}
+
+.invoice-line-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.crm-data-table tbody tr.invoice-line-row--editing {
+  background: #eef2ff !important;
+  outline: 1px solid #c7d2fe;
 }
 
 .invoice-actions-primary {

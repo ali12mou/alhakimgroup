@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { CheckCircle2, Eye, FileDown, Mail, MessageCircle, Pencil, Plus, Printer, Trash2 } from "lucide-react";
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
@@ -134,6 +135,14 @@ function summarizeProformaType(lines: InvoiceLine[]): string {
   return "Mixte";
 }
 
+/** Résumé compact pour la liste (évite les lignes trop hautes) */
+function summarizeServicesList(lines: InvoiceLine[], max = 1): string {
+  const names = lines.map((l) => l.designation).filter(Boolean);
+  if (names.length === 0) return "—";
+  if (names.length <= max) return names.join(", ");
+  return `${names.slice(0, max).join(", ")} +${names.length - max}`;
+}
+
 /** Reference = date du jour (YYYYMMDD) + compteur proforma sur 6 chiffres */
 function nextProformaReference(existingProformas: Array<{ reference?: string }>, now = new Date()): string {
   const y = now.getFullYear();
@@ -188,10 +197,12 @@ export default function Proformas({
   onProformaEditOpened,
   onRefresh
 }: ProformasProps) {
+  const { t } = useTranslation();
   const [form, setForm] = useState<FormState>(initialForm);
   const [lineForm, setLineForm] = useState<LineFormState>(emptyLineForm);
   const [lignes, setLignes] = useState<InvoiceLine[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingLineIndex, setEditingLineIndex] = useState<number | null>(null);
   const [saving, setSaving] = useState(false);
   const [previewRow, setPreviewRow] = useState<ProformaApi | null>(null);
   const previewIframeRef = useRef<HTMLIFrameElement>(null);
@@ -206,11 +217,6 @@ export default function Proformas({
         return db - da;
       }),
     [proformas]
-  );
-
-  const draftProformas = useMemo(
-    () => sortedProformas.filter((row) => row.status === "Brouillon"),
-    [sortedProformas]
   );
 
   useEffect(() => {
@@ -266,6 +272,7 @@ export default function Proformas({
     setLineForm(emptyLineForm());
     setLignes([]);
     setEditingId(null);
+    setEditingLineIndex(null);
     setShowProformaForm(false);
   }
 
@@ -284,6 +291,7 @@ export default function Proformas({
     setLineForm(emptyLineForm());
     setLignes([]);
     setEditingId(null);
+    setEditingLineIndex(null);
     setShowProformaForm(true);
   }
 
@@ -303,34 +311,86 @@ export default function Proformas({
 
   const proformaFormVisible = showProformaForm || editingId !== null;
 
-  function addLine() {
+  function resolveServiceId(line: InvoiceLine): string {
+    if (typeof line.service === "string" && line.service) return line.service;
+    if (line.service && typeof line.service === "object" && "_id" in line.service) {
+      return String((line.service as { _id: string })._id);
+    }
+    const byName = services.find(
+      (s) =>
+        serviceLabel(s) === line.designation ||
+        s.designation === line.designation ||
+        s.name === line.designation
+    );
+    return byName?._id || "";
+  }
+
+  function buildLineFromForm(): InvoiceLine | null {
     const largeur = needsDimensions(lineForm.unite) ? Math.max(0, Number(lineForm.largeur) || 0) : 0;
     const longueur = needsDimensions(lineForm.unite) ? Math.max(0, Number(lineForm.longueur) || 0) : 0;
     const quantite = Math.max(0.01, Number(lineForm.quantite) || 0);
     const prixUnitaire = Math.max(0, Number(lineForm.prixUnitaire) || 0);
     if (!selectedService || quantite <= 0) {
       window.alert("Veuillez selectionner un service et une quantite.");
-      return;
+      return null;
     }
     if (needsDimensions(lineForm.unite) && (largeur <= 0 || longueur <= 0)) {
       window.alert("Veuillez saisir la largeur et la longueur.");
-      return;
+      return null;
     }
-    setLignes((prev) => [
-      ...prev,
-      {
-        service: selectedService._id,
-        designation: serviceLabel(selectedService),
-        category: lineForm.category,
-        description: "",
-        quantite,
-        largeur,
-        longueur,
-        unite: lineForm.unite,
-        prixUnitaire,
-        montant: quantite * prixUnitaire
-      }
-    ]);
+    return {
+      service: selectedService._id,
+      designation: serviceLabel(selectedService),
+      category: lineForm.category,
+      description: "",
+      quantite,
+      largeur,
+      longueur,
+      unite: lineForm.unite,
+      prixUnitaire,
+      montant: quantite * prixUnitaire
+    };
+  }
+
+  function addLine() {
+    const next = buildLineFromForm();
+    if (!next) return;
+
+    if (editingLineIndex !== null) {
+      setLignes((prev) => prev.map((line, i) => (i === editingLineIndex ? next : line)));
+      setEditingLineIndex(null);
+    } else {
+      setLignes((prev) => [...prev, next]);
+    }
+
+    setLineForm((prev) => ({
+      ...emptyLineForm(),
+      category: prev.category
+    }));
+  }
+
+  function startEditLine(index: number) {
+    const line = lignes[index];
+    if (!line) return;
+    const category =
+      (normalizeCategory(line.category) as ClientActivityCategory) ||
+      CLIENT_ACTIVITY_CATEGORIES[0];
+    setEditingLineIndex(index);
+    setLineForm({
+      category,
+      serviceId: resolveServiceId(line),
+      description: line.description || "",
+      quantite: Number(line.quantite) || 1,
+      largeur: Number(line.largeur) || 0,
+      longueur: Number(line.longueur) || 0,
+      unite: normalizeUnite(line.unite),
+      prixUnitaire: Number(line.prixUnitaire) || 0
+    });
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function cancelEditLine() {
+    setEditingLineIndex(null);
     setLineForm((prev) => ({
       ...emptyLineForm(),
       category: prev.category
@@ -339,6 +399,11 @@ export default function Proformas({
 
   function removeLine(index: number) {
     setLignes((prev) => prev.filter((_, i) => i !== index));
+    if (editingLineIndex === index) {
+      cancelEditLine();
+    } else if (editingLineIndex !== null && editingLineIndex > index) {
+      setEditingLineIndex(editingLineIndex - 1);
+    }
   }
 
   async function upsertProforma() {
@@ -520,6 +585,7 @@ export default function Proformas({
       bankIban: row.bankIban || companyBank.iban || "",
       bankSwift: row.bankSwift || companyBank.swift || "",
       amount: Number(row.amount || 0),
+      remisePercent: 0,
       isValidated: true,
       lines,
       date: now.toISOString(),
@@ -1333,22 +1399,19 @@ export default function Proformas({
       <header className="invoice-pro-hero">
         <div className="invoice-pro-hero-inner">
           <div>
-            <span className="invoice-pro-badge">AL-HAKIM GROUP · Proformas</span>
-            <h1>Proformas</h1>
-            <p>
-              Creation de proformas multi-lignes, envoi client et export PDF — aligne sur votre identite
-              AL-HAKIM GROUP.
-            </p>
+            <span className="invoice-pro-badge">{t("proformas.badge")}</span>
+            <h1>{t("proformas.title")}</h1>
+            <p>{t("proformas.subtitle")}</p>
           </div>
           <div className="invoice-hero-actions">
             {proformaFormVisible ? (
               <button type="button" className="invoice-btn-hero invoice-btn-hero--outline" onClick={closeProformaForm}>
-                Fermer le formulaire
+                {t("proformas.closeForm")}
               </button>
             ) : null}
             <button type="button" className="invoice-btn-hero" onClick={openNewProformaForm}>
               <Plus size={18} />
-              Nouvelle proforma
+              {t("proformas.new")}
             </button>
           </div>
         </div>
@@ -1356,43 +1419,11 @@ export default function Proformas({
 
       {!proformaFormVisible ? (
         <div className="invoice-form-placeholder">
-          {draftProformas.length > 0 ? (
-            <>
-              <p>
-                Proformas en brouillon — ouvrez le formulaire pour voir client, lignes et compte bancaire :
-              </p>
-              <ul className="invoice-draft-list">
-                {draftProformas.map((row) => (
-                  <li key={row._id}>
-                    <span>
-                      <strong>{row.clientName}</strong>
-                      {" · "}
-                      {row.proformaId}
-                      {" · "}
-                      {formatMoney(Number(row.amount || 0), currency)}
-                    </span>
-                    <button
-                      type="button"
-                      className="invoice-btn invoice-btn--secondary invoice-btn--compact"
-                      onClick={() => void editProforma(row)}
-                    >
-                      <Pencil size={14} />
-                      Ouvrir le formulaire
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            </>
-          ) : (
-            <p>
-              Cliquez sur <strong>Nouvelle proforma</strong> pour afficher le formulaire et ajouter des lignes avant
-              enregistrement.
-            </p>
-          )}
+          <p dangerouslySetInnerHTML={{ __html: t("proformas.placeholder") }} />
         </div>
       ) : (
       <section className="invoice-form-card">
-        <h2>{editingId ? "Modifier la proforma" : "Nouvelle proforma"}</h2>
+        <h2>{editingId ? t("proformas.edit") : t("proformas.new")}</h2>
         <p className="invoice-section-hint" style={{ marginTop: 0 }}>
           Vous pouvez ajouter plusieurs lignes avec des types et designations differents sur la meme proforma.
         </p>
@@ -1564,15 +1595,20 @@ export default function Proformas({
 
         <div className="invoice-toolbar">
           <button type="button" className="invoice-btn invoice-btn--secondary" onClick={addLine}>
-            Ajouter designation
+            {editingLineIndex !== null ? "Mettre a jour la ligne" : "Ajouter designation"}
           </button>
+          {editingLineIndex !== null ? (
+            <button type="button" className="invoice-btn invoice-btn--ghost" onClick={cancelEditLine}>
+              Annuler la ligne
+            </button>
+          ) : null}
           <button type="button" className="invoice-btn invoice-btn--primary" onClick={() => void upsertProforma()} disabled={saving}>
             <FileDown size={16} />
-            {saving ? "Enregistrement..." : editingId ? "Enregistrer la modification" : "Enregistrer la proforma"}
+            {saving ? "Enregistrement..." : editingId ? t("proformas.saveEdit") : t("proformas.save")}
           </button>
           {editingId ? (
             <button type="button" className="invoice-btn invoice-btn--ghost" onClick={resetForm}>
-              Annuler
+              {t("common.cancel")}
             </button>
           ) : null}
         </div>
@@ -1587,7 +1623,7 @@ export default function Proformas({
                 <th>Qté</th>
                 <th>Prix unit.</th>
                 <th>Montant</th>
-                <th></th>
+                <th>{t("common.actions")}</th>
               </tr>
             </thead>
             <tbody>
@@ -1599,7 +1635,10 @@ export default function Proformas({
                 </tr>
               ) : (
                 lignes.map((line, index) => (
-                  <tr key={`${line.designation}-${index}`}>
+                  <tr
+                    key={`${line.designation}-${index}`}
+                    className={editingLineIndex === index ? "invoice-line-row--editing" : undefined}
+                  >
                     <td>{line.category || "—"}</td>
                     <td><strong>{line.designation}</strong></td>
                     <td>{formatUniteMeasure(line)}</td>
@@ -1607,14 +1646,24 @@ export default function Proformas({
                     <td>{formatMoney(line.prixUnitaire, currency)}</td>
                     <td>{formatMoney(line.montant, currency)}</td>
                     <td>
-                      <button
-                        type="button"
-                        className="invoice-icon-btn invoice-icon-btn--danger"
-                        title="Supprimer la ligne"
-                        onClick={() => removeLine(index)}
-                      >
-                        <Trash2 size={15} />
-                      </button>
+                      <div className="invoice-line-actions">
+                        <button
+                          type="button"
+                          className="invoice-icon-btn"
+                          title={t("common.edit")}
+                          onClick={() => startEditLine(index)}
+                        >
+                          <Pencil size={15} />
+                        </button>
+                        <button
+                          type="button"
+                          className="invoice-icon-btn invoice-icon-btn--danger"
+                          title={t("common.delete")}
+                          onClick={() => removeLine(index)}
+                        >
+                          <Trash2 size={15} />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))
@@ -1625,114 +1674,135 @@ export default function Proformas({
       </section>
       )}
 
-      <h3 className="invoice-section-title">Toutes les proformas</h3>
-      <p className="invoice-section-hint">Actions rapides : apercu, validation (conversion facture), edition, envoi et export.</p>
+      <h3 className="invoice-section-title">{t("proformas.all")}</h3>
+      <p className="invoice-section-hint">{t("proformas.hint")}</p>
       <div className="invoice-list-card">
-        <div className="table-responsive">
-          <table className="crm-data-table crm-data-table--list">
+        <div className="table-responsive table-responsive--list">
+          <table className="crm-data-table crm-data-table--list crm-data-table--proformas">
             <thead>
               <tr>
-                <th>Id</th>
-                <th>Type</th>
-                <th>Client</th>
-                <th>Entreprise</th>
-                <th>Tel.</th>
-                <th>Expiration</th>
-                <th>Compte</th>
-                <th>Services</th>
-                <th>Lignes</th>
-                <th>Qté</th>
-                <th>Total</th>
-                <th>Statut</th>
-                <th>Actions</th>
+                <th>{t("common.id")}</th>
+                <th>{t("common.type")}</th>
+                <th>{t("common.client")}</th>
+                <th className="col-hide-lg">{t("common.company")}</th>
+                <th>{t("common.phone")}</th>
+                <th className="col-hide-lg">{t("common.expiration")}</th>
+                <th className="col-hide-md">{t("common.account")}</th>
+                <th className="col-hide-md">{t("common.services")}</th>
+                <th>{t("common.lines")}</th>
+                <th className="col-hide-sm">{t("common.quantity")}</th>
+                <th>{t("common.total")}</th>
+                <th>{t("common.status")}</th>
+                <th>{t("common.actions")}</th>
               </tr>
             </thead>
             <tbody>
               {proformas.length === 0 ? (
                 <tr>
                   <td colSpan={13} className="crm-empty">
-                    Aucune proforma pour le moment.
+                    {t("proformas.emptyList")}
                   </td>
                 </tr>
               ) : (
                 sortedProformas.map((row) => {
                   const lines = proformaLinesOf(row);
+                  const servicesFull = lines.map((line) => line.designation).filter(Boolean).join(", ");
+                  const accountLabel = [row.bankName, row.bankAccountNumber].filter(Boolean).join(" · ") || "—";
                   return (
                     <tr key={row._id}>
-                      <td className="crm-mono-id">{row.proformaId}</td>
-                      <td>{summarizeProformaType(lines) || row.invoiceType || "Mixte"}</td>
-                      <td>{row.clientName}</td>
-                      <td>{row.company}</td>
-                      <td>{row.phone || "—"}</td>
+                      <td className="crm-mono-id" title={row.proformaId}>
+                        <span className="crm-cell-truncate">{row.reference || row.proformaId}</span>
+                      </td>
                       <td>
+                        <span className="crm-cell-truncate crm-cell-truncate--sm" title={summarizeProformaType(lines) || row.invoiceType || "Mixte"}>
+                          {summarizeProformaType(lines) || row.invoiceType || "Mixte"}
+                        </span>
+                      </td>
+                      <td>
+                        <strong className="crm-cell-truncate" title={row.clientName}>
+                          {row.clientName}
+                        </strong>
+                      </td>
+                      <td className="col-hide-lg">
+                        <span className="crm-cell-truncate" title={row.company}>
+                          {row.company}
+                        </span>
+                      </td>
+                      <td className="crm-nowrap">{row.phone || "—"}</td>
+                      <td className="col-hide-lg crm-nowrap">
                         {row.expirationDate
                           ? new Date(row.expirationDate).toLocaleDateString("fr-FR")
                           : "—"}
                       </td>
-                      <td>
-                        {row.bankName || "—"}
-                        {row.bankAccountNumber ? ` · ${row.bankAccountNumber}` : ""}
+                      <td className="col-hide-md" title={accountLabel}>
+                        <span className="crm-cell-truncate">{row.bankName || "—"}</span>
                       </td>
-                      <td>{lines.map((line) => line.designation).join(", ") || "—"}</td>
-                      <td>{lines.length}</td>
-                      <td>{lines.reduce((sum, line) => sum + Number(line.quantite || 0), 0)}</td>
-                      <td><strong>{formatMoney(Number(row.amount || 0), currency)}</strong></td>
+                      <td className="col-hide-md" title={servicesFull || "—"}>
+                        <span className="crm-cell-truncate">{summarizeServicesList(lines)}</span>
+                      </td>
+                      <td className="crm-num">{lines.length}</td>
+                      <td className="col-hide-sm crm-num">
+                        {lines.reduce((sum, line) => sum + Number(line.quantite || 0), 0)}
+                      </td>
+                      <td className="crm-nowrap">
+                        <strong>{formatMoney(Number(row.amount || 0), currency)}</strong>
+                      </td>
                       <td>
                         <span className={proformaStatusBadgeClass(row.status)}>
                           {proformaStatusLabel(row.status)}
                         </span>
                       </td>
                       <td>
-                        <div className="invoice-actions-cell">
+                        <div className="invoice-actions-cell invoice-actions-cell--compact">
                           <div className="invoice-actions-primary">
                             <button
                               type="button"
                               className="invoice-action-text"
-                              title="Voir la proforma"
+                              title={t("common.view")}
                               onClick={() => viewProforma(row)}
                             >
                               <Eye size={14} />
-                              Voir
+                              <span className="action-label">{t("common.view")}</span>
                             </button>
                             <button
                               type="button"
                               className="invoice-action-text invoice-action-text--accent"
-                              title="Imprimer la proforma"
+                              title={t("common.print")}
                               onClick={() => printProforma(row)}
                             >
                               <Printer size={14} />
-                              Imprimer
+                              <span className="action-label">{t("common.print")}</span>
                             </button>
                           </div>
                           <div className="invoice-actions-bar">
                             <button
                               type="button"
                               className="invoice-icon-btn invoice-icon-btn--success"
-                              title="Valider et convertir en facture"
+                              title={t("proformas.convert")}
                               onClick={() => void convertProformaToInvoice(row)}
                               disabled={row.status === "Converti"}
                             >
                               <CheckCircle2 size={15} />
                             </button>
-                            <button type="button" className="invoice-icon-btn" title="Modifier" onClick={() => void editProforma(row)}>
+                            <button type="button" className="invoice-icon-btn" title={t("common.edit")} onClick={() => void editProforma(row)}>
                               <Pencil size={15} />
                             </button>
                             <button
                               type="button"
                               className="invoice-icon-btn invoice-icon-btn--danger"
-                              title="Supprimer"
+                              title={t("common.delete")}
                               onClick={() => void deleteProforma(row)}
                               disabled={!!(row.status === "Accepte" || row.status === "Converti")}
                             >
                               <Trash2 size={15} />
                             </button>
-                            <button type="button" className="invoice-icon-btn" title="Envoyer WhatsApp" onClick={() => sendViaWhatsApp(row)}>
+                            <button type="button" className="invoice-icon-btn" title={t("proformas.whatsapp")} onClick={() => sendViaWhatsApp(row)}>
                               <MessageCircle size={15} />
                             </button>
-                            <button type="button" className="invoice-icon-btn" title="Envoyer email" onClick={() => sendViaEmail(row)}>
+                            <button type="button" className="invoice-icon-btn" title={t("proformas.email")} onClick={() => sendViaEmail(row)}>
                               <Mail size={15} />
                             </button>
-                            <button type="button" className="invoice-icon-btn" title="Telecharger PDF" onClick={() => exportProformaPdf(row)}>
+                            <button type="button" className="invoice-icon-btn" title={t("proformas.pdf")} onClick={() => exportProformaPdf(row)}>
                               <FileDown size={15} />
                             </button>
                           </div>

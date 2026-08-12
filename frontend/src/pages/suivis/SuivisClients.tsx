@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Pencil, Plus, Trash2 } from "lucide-react";
 import { api } from "../../services/apiService";
 import type { Client, FollowUp } from "../../types";
@@ -19,6 +20,7 @@ const emptyForm = {
 };
 
 export default function SuivisClients({ clients, followUps, onRefresh }: SuivisClientsProps) {
+  const { t } = useTranslation();
   const [form, setForm] = useState(emptyForm);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [showNewForm, setShowNewForm] = useState(false);
@@ -108,8 +110,8 @@ export default function SuivisClients({ clients, followUps, onRefresh }: SuivisC
     <section className="suivis-clients-page">
       <header className="billing-header">
         <div>
-          <h1>Suivis clients</h1>
-          <p>Enregistrez les echanges, raisons et reponses pour chaque client.</p>
+          <h1>{t("followups.title")}</h1>
+          <p>{t("followups.subtitle")}</p>
         </div>
         <button
           type="button"
@@ -120,13 +122,13 @@ export default function SuivisClients({ clients, followUps, onRefresh }: SuivisC
           }}
         >
           <Plus size={16} />
-          Nouveau suivi
+          {t("followups.new")}
         </button>
       </header>
 
       {formOpen ? (
       <section className="settings-panel">
-        <h2>{editingId ? "Modifier le suivi" : "Nouveau suivi"}</h2>
+        <h2>{editingId ? t("common.edit") : t("followups.new")}</h2>
         <div className="settings-form-grid">
           <label>
             <span>Nom client</span>

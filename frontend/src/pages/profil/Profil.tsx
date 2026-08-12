@@ -1,4 +1,5 @@
 import { useEffect, useState, type FormEvent } from "react";
+import { useTranslation } from "react-i18next";
 import { Save, UserRound } from "lucide-react";
 import { api } from "../../services/apiService";
 import { setCurrentAuthUser, type AuthUser } from "../../services/authService";
@@ -10,6 +11,7 @@ type ProfilProps = {
 };
 
 export default function Profil({ user, onUserUpdated }: ProfilProps) {
+  const { t } = useTranslation();
   const [fullName, setFullName] = useState(user.fullName || "");
   const [phone, setPhone] = useState(user.phone || "");
   const [password, setPassword] = useState("");
@@ -63,8 +65,8 @@ export default function Profil({ user, onUserUpdated }: ProfilProps) {
     <section className="profil-page">
       <header className="profil-header">
         <div>
-          <h1>Profil</h1>
-          <p>Gerez vos informations personnelles et votre mot de passe.</p>
+          <h1>{t("profile.title")}</h1>
+          <p>{t("profile.subtitle")}</p>
         </div>
         <div className="profil-avatar" aria-hidden>
           <UserRound size={28} />
@@ -73,43 +75,43 @@ export default function Profil({ user, onUserUpdated }: ProfilProps) {
 
       <div className="profil-grid">
         <article className="profil-card profil-card--summary">
-          <h2>Compte</h2>
-          <p><strong>Nom :</strong> {user.fullName}</p>
-          <p><strong>Email :</strong> {user.email}</p>
-          <p><strong>Role :</strong> {user.role?.name || "—"}</p>
-          <p><strong>Telephone :</strong> {user.phone || "—"}</p>
+          <h2>{t("nav.login")}</h2>
+          <p><strong>{t("common.name")} :</strong> {user.fullName}</p>
+          <p><strong>{t("common.email")} :</strong> {user.email}</p>
+          <p><strong>{t("profile.role")} :</strong> {user.role?.name || "—"}</p>
+          <p><strong>{t("common.phone")} :</strong> {user.phone || "—"}</p>
         </article>
 
         <form className="profil-card" onSubmit={(e) => void handleSave(e)}>
-          <h2>Modifier le profil</h2>
+          <h2>{t("profile.update")}</h2>
           <label>
-            <span>Nom complet</span>
+            <span>{t("profile.fullName")}</span>
             <input value={fullName} onChange={(e) => setFullName(e.target.value)} required />
           </label>
           <label>
-            <span>Email</span>
+            <span>{t("common.email")}</span>
             <input type="email" value={user.email} readOnly />
           </label>
           <label>
-            <span>Telephone</span>
+            <span>{t("common.phone")}</span>
             <input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+253 ..." />
           </label>
           <label>
-            <span>Nouveau mot de passe</span>
+            <span>{t("common.password")}</span>
             <input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="Laisser vide pour ne pas changer"
+              placeholder=""
             />
           </label>
           <label>
-            <span>Confirmer le mot de passe</span>
+            <span>{t("common.password")}</span>
             <input
               type="password"
               value={confirm}
               onChange={(e) => setConfirm(e.target.value)}
-              placeholder="Confirmation"
+              placeholder=""
             />
           </label>
           {message ? (
@@ -119,7 +121,7 @@ export default function Profil({ user, onUserUpdated }: ProfilProps) {
           ) : null}
           <button type="submit" className="profil-save" disabled={saving}>
             <Save size={16} />
-            {saving ? "Enregistrement..." : "Enregistrer"}
+            {saving ? t("common.loading") : t("common.save")}
           </button>
         </form>
       </div>

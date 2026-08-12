@@ -1,4 +1,5 @@
 import { useMemo, useState, type ChangeEvent } from "react";
+import { useTranslation } from "react-i18next";
 import { Plus } from "lucide-react";
 import { api } from "../../services/apiService";
 import type { Bank, Client, InvoicePaymentDoc, Setting } from "../../types";
@@ -59,6 +60,7 @@ export default function PaiementFacture({
   currency,
   onRefresh
 }: PaiementFactureProps) {
+  const { t } = useTranslation();
   const [showForm, setShowForm] = useState(false);
   const [saving, setSaving] = useState(false);
   const [clientId, setClientId] = useState("");
@@ -599,7 +601,7 @@ export default function PaiementFacture({
             <div class="card">
               <h3>Details de la facture</h3>
               <p><strong>Type :</strong> ${escapeHtml(invoice.invoiceType || "Mixte")}</p>
-              <p><strong>Compte :</strong> ${escapeHtml(invoice.bankName || "—")}</p>
+              <p><strong>Methode de paiement :</strong> ${escapeHtml(invoice.paymentMethod || "—")}</p>
               <p><strong>Statut :</strong> ${escapeHtml(invoice.paymentStatus || "—")}</p>
             </div>
           </section>
@@ -747,8 +749,8 @@ export default function PaiementFacture({
     <section className="billing-page">
       <header className="billing-header">
         <div>
-          <h1>Paiement facture</h1>
-          <p>Suivi des reglements et paiements clients.</p>
+          <h1>{t("payments.title")}</h1>
+          <p>{t("payments.subtitle")}</p>
         </div>
         <button
           type="button"
@@ -759,7 +761,7 @@ export default function PaiementFacture({
           }}
         >
           <Plus size={16} />
-          {showForm ? "Fermer le formulaire" : "Paiement"}
+          {showForm ? t("common.close") : t("payments.new")}
         </button>
       </header>
 

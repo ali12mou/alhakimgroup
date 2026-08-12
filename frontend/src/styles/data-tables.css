@@ -29,6 +29,123 @@
   min-width: 720px;
 }
 
+.table-responsive--list {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  max-width: 100%;
+}
+
+.table-responsive--list .crm-data-table--proformas {
+  min-width: 980px;
+  table-layout: fixed;
+  width: 100%;
+}
+
+.crm-data-table--proformas th,
+.crm-data-table--proformas td {
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+.crm-data-table--proformas .crm-cell-truncate {
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.crm-data-table--proformas .crm-cell-truncate--sm {
+  max-width: 9rem;
+}
+
+.crm-data-table--proformas .crm-mono-id {
+  max-width: 8.5rem;
+}
+
+.crm-data-table--proformas .crm-nowrap {
+  white-space: nowrap;
+}
+
+.crm-data-table--proformas .crm-num {
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.crm-data-table--proformas th:nth-child(1),
+.crm-data-table--proformas td:nth-child(1) { width: 9%; }
+.crm-data-table--proformas th:nth-child(2),
+.crm-data-table--proformas td:nth-child(2) { width: 10%; }
+.crm-data-table--proformas th:nth-child(3),
+.crm-data-table--proformas td:nth-child(3) { width: 10%; }
+.crm-data-table--proformas th:nth-child(5),
+.crm-data-table--proformas td:nth-child(5) { width: 7%; }
+.crm-data-table--proformas th:nth-child(9),
+.crm-data-table--proformas td:nth-child(9) { width: 5%; }
+.crm-data-table--proformas th:nth-child(11),
+.crm-data-table--proformas td:nth-child(11) { width: 9%; }
+.crm-data-table--proformas th:nth-child(12),
+.crm-data-table--proformas td:nth-child(12) { width: 8%; }
+.crm-data-table--proformas th:nth-child(13),
+.crm-data-table--proformas td:nth-child(13) { width: 18%; }
+
+.invoice-actions-cell--compact {
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.invoice-actions-cell--compact .invoice-actions-primary {
+  flex-wrap: nowrap;
+}
+
+.invoice-actions-cell--compact .invoice-actions-bar {
+  flex-wrap: wrap;
+}
+
+@media (max-width: 1200px) {
+  .col-hide-lg {
+    display: none !important;
+  }
+  .table-responsive--list .crm-data-table--proformas {
+    min-width: 820px;
+  }
+}
+
+@media (max-width: 900px) {
+  .col-hide-md {
+    display: none !important;
+  }
+  .table-responsive--list .crm-data-table--proformas {
+    min-width: 640px;
+  }
+  .crm-data-table--proformas .action-label {
+    display: none;
+  }
+  .invoice-actions-cell--compact .invoice-action-text {
+    padding: 0.4rem;
+    min-width: 36px;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 640px) {
+  .col-hide-sm {
+    display: none !important;
+  }
+  .table-responsive--list .crm-data-table--proformas {
+    min-width: 520px;
+  }
+  .crm-data-table--proformas thead th,
+  .crm-data-table--proformas tbody td {
+    padding: 0.55rem 0.5rem;
+    font-size: 0.8rem;
+  }
+}
+
 .crm-data-table--settings {
   margin-top: 8px;
 }

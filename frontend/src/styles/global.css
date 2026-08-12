@@ -19,3 +19,63 @@ body.nav-drawer-open {
     overflow: auto;
   }
 }
+
+/* RTL (arabe) */
+html[dir="rtl"] body,
+body.lang-rtl {
+  direction: rtl;
+  text-align: right;
+}
+
+html[dir="rtl"] .layout,
+body.lang-rtl .layout {
+  direction: rtl;
+  grid-template-columns: 1fr 260px;
+}
+
+html[dir="rtl"] .sidebar,
+body.lang-rtl .sidebar {
+  order: 2;
+}
+
+html[dir="rtl"] .layout-shell,
+body.lang-rtl .layout-shell {
+  order: 1;
+}
+
+html[dir="rtl"] .sidebar-nav button.active,
+body.lang-rtl .sidebar-nav button.active {
+  border-left: none;
+  border-right: 3px solid #7eb6ff;
+}
+
+html[dir="rtl"] .crm-data-table th,
+html[dir="rtl"] .crm-data-table td,
+body.lang-rtl .crm-data-table th,
+body.lang-rtl .crm-data-table td {
+  text-align: right;
+}
+
+html[dir="rtl"] .clients-header,
+body.lang-rtl .clients-header,
+html[dir="rtl"] .invoice-pro-hero-inner,
+body.lang-rtl .invoice-pro-hero-inner {
+  flex-direction: row-reverse;
+}
+
+@media (max-width: 900px) {
+  html[dir="rtl"] .layout,
+  body.lang-rtl .layout {
+    grid-template-columns: 1fr;
+  }
+  html[dir="rtl"] .sidebar,
+  body.lang-rtl .sidebar {
+    right: 0;
+    left: auto;
+    transform: translateX(100%);
+  }
+  html[dir="rtl"] .layout--nav-open .sidebar,
+  body.lang-rtl .layout--nav-open .sidebar {
+    transform: translateX(0);
+  }
+}

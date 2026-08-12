@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   Bar,
   BarChart,
@@ -180,6 +181,7 @@ function formatConnectedAt(iso: string): string {
 }
 
 export default function DashboardPage({ onNavigate }: Props) {
+  const { t } = useTranslation();
   const [dashboard, setDashboard] = useState<Dashboard>(demoDashboard);
   const [settings, setSettings] = useState<Setting>(defaultSettings);
   const [loading, setLoading] = useState(true);
@@ -334,9 +336,9 @@ export default function DashboardPage({ onNavigate }: Props) {
   return (
     <section className="dash-pro">
       <header className="dash-pro-hero">
-        <span className="dash-pro-badge">AL-HAKIM GROUP · CRM & ventes</span>
-        <h1>Tableau de bord</h1>
-        <p>Vue d&apos;ensemble de votre portefeuille clients, chiffre d&apos;affaires et activite.</p>
+        <span className="dash-pro-badge">{t("common.brand")} · {t("common.tagline")}</span>
+        <h1>{t("dashboard.title")}</h1>
+        <p>{t("dashboard.subtitle")}</p>
       </header>
 
       {error ? <div className="dash-pro-alert">{error}</div> : null}

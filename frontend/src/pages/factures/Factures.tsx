@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { CheckCircle2, Eye, FileDown, Mail, MessageCircle, Pencil, Plus, Printer, Trash2 } from "lucide-react";
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
@@ -55,6 +56,7 @@ type InvoiceApi = {
   bankIban?: string;
   bankSwift?: string;
   amount?: number;
+  remisePercent?: number;
   date: string;
   paymentStatus: string;
   paymentMethod: string;
@@ -68,6 +70,7 @@ type FormState = {
   entreprise: string;
   telephone: string;
   bankId: string;
+  remisePercent: number;
 };
 
 const initialForm: FormState = {
@@ -75,7 +78,8 @@ const initialForm: FormState = {
   nomClient: "",
   entreprise: "",
   telephone: "",
-  bankId: ""
+  bankId: "",
+  remisePercent: 0
 };
 
 type LineFormState = {
@@ -125,6 +129,20 @@ function normalizeCategory(value: unknown): string {
   return (CLIENT_ACTIVITY_CATEGORIES as readonly string[]).includes(String(value || ""))
     ? String(value)
     : "";
+}
+
+function clampRemisePercent(value: unknown): number {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return 0;
+  return Math.min(100, Math.max(0, Math.round(n * 100) / 100));
+}
+
+function calcInvoiceTotals(lines: Array<{ montant: number }>, remisePercent: unknown) {
+  const subtotal = lines.reduce((sum, l) => sum + (Number(l.montant) || 0), 0);
+  const remise = clampRemisePercent(remisePercent);
+  const discountAmount = Math.round((subtotal * remise) / 100);
+  const net = Math.max(0, subtotal - discountAmount);
+  return { subtotal, remisePercent: remise, discountAmount, net };
 }
 
 function invoiceLinesOf(row: InvoiceApi): InvoiceLine[] {
@@ -196,6 +214,7 @@ export default function Factures({
   invoices,
   onRefresh
 }: FacturesProps) {
+  const { t } = useTranslation();
   const [form, setForm] = useState<FormState>(initialForm);
   const [lineForm, setLineForm] = useState<LineFormState>(emptyLineForm);
   const [lignes, setLignes] = useState<InvoiceLine[]>([]);
@@ -227,6 +246,11 @@ export default function Factures({
   const lineMontant = useMemo(
     () => Math.max(0, Number(lineForm.quantite) || 0) * Math.max(0, Number(lineForm.prixUnitaire) || 0),
     [lineForm.quantite, lineForm.prixUnitaire]
+  );
+
+  const formTotals = useMemo(
+    () => calcInvoiceTotals(lignes, form.remisePercent),
+    [lignes, form.remisePercent]
   );
 
   function updateLineUnite(unite: InvoiceUnit) {
@@ -346,7 +370,7 @@ export default function Factures({
       return;
     }
 
-    const totalMontant = lignes.reduce((sum, l) => sum + l.montant, 0);
+    const { subtotal: _sub, remisePercent, net } = calcInvoiceTotals(lignes, form.remisePercent);
     const bankId = form.bankId || defaultBankId();
     const bank = banks.find((b) => b._id === bankId);
     const companyBank = resolveCompanyBank(settings, banks);
@@ -370,7 +394,8 @@ export default function Factures({
       bankAccountHolder: bank?.accountHolder || companyBank.accountHolder || "",
       bankIban: bank?.iban || companyBank.iban || "",
       bankSwift: bank?.swift || companyBank.swift || "",
-      amount: totalMontant,
+      amount: net,
+      remisePercent,
       isValidated: existing?.isValidated ?? false,
       lines: lignes,
       date: existing?.date ?? now.toISOString(),
@@ -430,7 +455,8 @@ export default function Factures({
           ? toEdit.bank._id
           : typeof toEdit.bank === "string"
             ? toEdit.bank
-            : banks.find((b) => b.name === toEdit.bankName)?._id || defaultBankId()
+            : banks.find((b) => b.name === toEdit.bankName)?._id || defaultBankId(),
+      remisePercent: clampRemisePercent(toEdit.remisePercent)
     });
     const loadedLines = invoiceLinesOf(toEdit);
     setLignes(loadedLines);
@@ -483,11 +509,13 @@ export default function Factures({
       : `<div class="logo-fallback">${companyName.charAt(0)}</div>`;
     const lines = invoiceLinesOf(row);
     const dateLabel = new Date(row.date).toLocaleDateString("fr-FR");
-    const amount = Number(row.amount || 0);
-    const total = formatMoneyPdf(amount, currency);
-    const acompte = formatMoneyPdf(amount * 0.5, currency);
-    const soldeTravaux = formatMoneyPdf(amount * 0.45, currency);
-    const soldeFinal = formatMoneyPdf(amount * 0.05, currency);
+    const totals = calcInvoiceTotals(lines, row.remisePercent);
+    const subtotalLabel = formatMoneyPdf(totals.subtotal, currency);
+    const discountLabel = formatMoneyPdf(totals.discountAmount, currency);
+    const total = formatMoneyPdf(totals.net, currency);
+    const acompte = formatMoneyPdf(totals.net * 0.5, currency);
+    const soldeTravaux = formatMoneyPdf(totals.net * 0.45, currency);
+    const soldeFinal = formatMoneyPdf(totals.net * 0.05, currency);
     const currencyLabel =
       currency.toUpperCase() === "FDJ" ? "Franc Djiboutien (FDJ)" : currency;
     const reference = row.reference?.trim() || "—";
@@ -560,18 +588,18 @@ export default function Factures({
       border-bottom: 2px solid #101C4E;
       margin-bottom: 16px;
     }
-    .brand { display: flex; gap: 12px; align-items: center; min-width: 0; }
+    .brand { display: flex; gap: 14px; align-items: center; min-width: 0; }
     .logo, .logo-fallback {
-      width: 64px; height: 64px; object-fit: contain;
-      border-radius: 10px; border: 1px solid #dbe4ee; background: #fff;
+      width: 96px; height: 96px; object-fit: contain;
+      border-radius: 12px; border: 1px solid #dbe4ee; background: #fff;
       flex-shrink: 0;
     }
     .logo-fallback {
       display: grid; place-items: center;
-      font-size: 26px; font-weight: 800; color: #101C4E;
+      font-size: 36px; font-weight: 800; color: #101C4E;
     }
     .brand h1 {
-      margin: 0; font-size: 18px; letter-spacing: 0.03em;
+      margin: 0; font-size: 20px; letter-spacing: 0.03em;
       text-transform: uppercase; color: #101C4E;
     }
     .brand .tagline {
@@ -799,6 +827,7 @@ export default function Factures({
           <p><strong>Type :</strong> ${escapeHtml(summarizeInvoiceType(lines) || row.invoiceType || "Mixte")}</p>
           <p><strong>Devise :</strong> ${escapeHtml(currencyLabel)}</p>
           <p><strong>Reference :</strong> ${escapeHtml(reference)}</p>
+          <p><strong>Remise :</strong> ${totals.remisePercent}%</p>
           ${
             row.invoiceType === "Domaine"
               ? `<p><strong>Domaine :</strong> ${escapeHtml(row.domainName || "—")}</p>
@@ -840,7 +869,8 @@ export default function Factures({
 
       <div class="totals">
         <div class="totals-box">
-          <div class="row"><span>Sous-total</span><span>${total}</span></div>
+          <div class="row"><span>Sous-total</span><span>${subtotalLabel}</span></div>
+          <div class="row"><span>Remise (${totals.remisePercent}%)</span><span>- ${discountLabel}</span></div>
           <div class="row total"><span>NET A PAYER</span><span>${total}</span></div>
         </div>
       </div>
@@ -963,33 +993,35 @@ export default function Factures({
     const bankHolder = bank.accountHolder || companyName;
     const dateLabel = new Date(row.date).toLocaleDateString("fr-FR");
     const pageW = doc.internal.pageSize.getWidth();
-    const amount = Number(row.amount || 0);
-    const total = formatMoneyPdf(amount, currency);
-    const acompte = formatMoneyPdf(amount * 0.5, currency);
-    const soldeTravaux = formatMoneyPdf(amount * 0.45, currency);
-    const soldeFinal = formatMoneyPdf(amount * 0.05, currency);
     const lines = invoiceLinesOf(row);
+    const totals = calcInvoiceTotals(lines, row.remisePercent);
+    const subtotalLabel = formatMoneyPdf(totals.subtotal, currency);
+    const discountLabel = formatMoneyPdf(totals.discountAmount, currency);
+    const total = formatMoneyPdf(totals.net, currency);
+    const acompte = formatMoneyPdf(totals.net * 0.5, currency);
+    const soldeTravaux = formatMoneyPdf(totals.net * 0.45, currency);
+    const soldeFinal = formatMoneyPdf(totals.net * 0.05, currency);
     const reference = row.reference?.trim() || "—";
 
     doc.setFillColor(16, 28, 78);
     doc.rect(0, 0, pageW, 8, "F");
 
-    if (settings.logoDataUrl) addLogoToPdf(doc, settings.logoDataUrl, 14, 14, 22, 22);
+    if (settings.logoDataUrl) addLogoToPdf(doc, settings.logoDataUrl, 14, 12, 34, 34);
 
-    const leftX = settings.logoDataUrl ? 42 : 14;
+    const leftX = settings.logoDataUrl ? 54 : 14;
     doc.setTextColor(16, 28, 78);
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(14);
-    doc.text(companyName.toUpperCase(), leftX, 20);
+    doc.setFontSize(15);
+    doc.text(companyName.toUpperCase(), leftX, 22);
     doc.setFont("helvetica", "normal");
     doc.setTextColor(100, 116, 139);
     doc.setFontSize(9);
-    doc.text("L'excellence au service de vos projets.", leftX, 26);
+    doc.text("L'excellence au service de vos projets.", leftX, 28);
     doc.setTextColor(51, 65, 85);
     doc.text(
       `${settings.companyEmail || "contact@geosomtech.com"} | ${settings.companyPhone || "+253 77 26 10 01"} | ${settings.address || "Djibouti"}`,
       leftX,
-      31
+      34
     );
 
     doc.setFillColor(16, 28, 78);
@@ -1075,21 +1107,24 @@ export default function Factures({
 
     doc.setFillColor(238, 240, 248);
     doc.setDrawColor(178, 183, 198);
-    doc.roundedRect(118, y, 78, 22, 2, 2, "FD");
+    doc.roundedRect(118, y, 78, 30, 2, 2, "FD");
     doc.setDrawColor(178, 183, 198);
-    doc.line(118, y + 11, 196, y + 11);
+    doc.line(118, y + 10, 196, y + 10);
+    doc.line(118, y + 19, 196, y + 19);
     doc.setTextColor(51, 65, 85);
     doc.setFont("helvetica", "normal");
-    doc.setFontSize(9);
-    doc.text("Sous-total", 122, y + 7.5);
-    doc.text(total, 192, y + 7.5, { align: "right" });
+    doc.setFontSize(8.5);
+    doc.text("Sous-total", 122, y + 7);
+    doc.text(subtotalLabel, 192, y + 7, { align: "right" });
+    doc.text(`Remise (${totals.remisePercent}%)`, 122, y + 16);
+    doc.text(`- ${discountLabel}`, 192, y + 16, { align: "right" });
     doc.setTextColor(16, 28, 78);
     doc.setFont("helvetica", "bold");
     doc.setFontSize(10);
-    doc.text("NET A PAYER", 122, y + 17);
-    doc.text(total, 192, y + 17, { align: "right" });
+    doc.text("NET A PAYER", 122, y + 25.5);
+    doc.text(total, 192, y + 25.5, { align: "right" });
 
-    y += 28;
+    y += 36;
     doc.setFillColor(238, 240, 245);
     doc.setDrawColor(178, 183, 198);
     doc.roundedRect(14, y, 182, 34, 2, 2, "FD");
@@ -1236,22 +1271,19 @@ export default function Factures({
       <header className="invoice-pro-hero">
         <div className="invoice-pro-hero-inner">
           <div>
-            <span className="invoice-pro-badge">AL-HAKIM GROUP · Facturation</span>
-            <h1>Factures</h1>
-            <p>
-              Creation de factures multi-lignes, validation, envoi client et export PDF — aligne sur votre identite
-              AL-HAKIM GROUP.
-            </p>
+            <span className="invoice-pro-badge">{t("common.brand")} · {t("invoices.title")}</span>
+            <h1>{t("invoices.title")}</h1>
+            <p>{t("invoices.subtitle")}</p>
           </div>
           <div className="invoice-hero-actions">
             {invoiceFormVisible ? (
               <button type="button" className="invoice-btn-hero invoice-btn-hero--outline" onClick={closeInvoiceForm}>
-                Fermer le formulaire
+                {t("invoices.closeForm")}
               </button>
             ) : null}
             <button type="button" className="invoice-btn-hero" onClick={openNewInvoiceForm}>
               <Plus size={18} />
-              Nouvelle facture
+              {t("invoices.new")}
             </button>
           </div>
         </div>
@@ -1259,14 +1291,11 @@ export default function Factures({
 
       {!invoiceFormVisible ? (
         <div className="invoice-form-placeholder">
-          <p>
-            Cliquez sur <strong>Nouvelle facture</strong> pour afficher le formulaire et ajouter des lignes avant
-            enregistrement.
-          </p>
+          <p dangerouslySetInnerHTML={{ __html: t("invoices.placeholder") }} />
         </div>
       ) : (
       <section className="invoice-form-card">
-        <h2>{editingId ? "Modifier la facture" : "Nouvelle facture"}</h2>
+        <h2>{editingId ? t("invoices.edit") : t("invoices.new")}</h2>
         <p className="invoice-section-hint" style={{ marginTop: 0 }}>
           Vous pouvez ajouter plusieurs lignes avec des types et designations differents sur la meme facture.
         </p>
@@ -1434,6 +1463,27 @@ export default function Factures({
             <span>Montant ({currency})</span>
             <input type="text" value={formatMoney(lineMontant, currency)} readOnly />
           </label>
+          <label>
+            <span>Remise (%)</span>
+            <input
+              type="number"
+              min={0}
+              max={100}
+              step={0.01}
+              value={form.remisePercent}
+              onChange={(e) =>
+                setForm({
+                  ...form,
+                  remisePercent: clampRemisePercent(e.target.value)
+                })
+              }
+              placeholder="ex: 10"
+            />
+          </label>
+          <label>
+            <span>Total global ({currency})</span>
+            <input type="text" value={formatMoney(formTotals.net, currency)} readOnly />
+          </label>
         </div>
 
         <div className="invoice-toolbar">
@@ -1496,10 +1546,27 @@ export default function Factures({
             </tbody>
           </table>
         </div>
+
+        {lignes.length > 0 ? (
+          <div className="invoice-form-totals">
+            <div className="invoice-form-totals-row">
+              <span>Sous-total</span>
+              <strong>{formatMoney(formTotals.subtotal, currency)}</strong>
+            </div>
+            <div className="invoice-form-totals-row">
+              <span>Remise ({formTotals.remisePercent}%)</span>
+              <strong>- {formatMoney(formTotals.discountAmount, currency)}</strong>
+            </div>
+            <div className="invoice-form-totals-row invoice-form-totals-row--net">
+              <span>Total global / NET A PAYER</span>
+              <strong>{formatMoney(formTotals.net, currency)}</strong>
+            </div>
+          </div>
+        ) : null}
       </section>
       )}
 
-      <h3 className="invoice-section-title">Toutes les factures</h3>
+      <h3 className="invoice-section-title">{t("invoices.all")}</h3>
       <p className="invoice-section-hint">Actions rapides : apercu, validation, edition, envoi et export.</p>
       <div className="invoice-list-card">
         <div className="table-responsive">
@@ -1525,7 +1592,7 @@ export default function Factures({
               {invoices.length === 0 ? (
                 <tr>
                   <td colSpan={13} className="crm-empty">
-                    Aucune facture pour le moment.
+                    {t("invoices.emptyList")}
                   </td>
                 </tr>
               ) : (
@@ -1550,7 +1617,14 @@ export default function Factures({
                       <td>{lines.map((line) => line.designation).join(", ") || "—"}</td>
                       <td>{lines.length}</td>
                       <td>{lines.reduce((sum, line) => sum + Number(line.quantite || 0), 0)}</td>
-                      <td><strong>{formatMoney(Number(row.amount || 0), currency)}</strong></td>
+                      <td>
+                        <strong>{formatMoney(Number(row.amount || 0), currency)}</strong>
+                        {clampRemisePercent(row.remisePercent) > 0 ? (
+                          <div className="invoice-remise-hint">
+                            Remise {clampRemisePercent(row.remisePercent)}%
+                          </div>
+                        ) : null}
+                      </td>
                       <td>
                         <span className={row.isValidated ? "invoice-badge invoice-badge--validated" : "invoice-badge invoice-badge--draft"}>
                           {row.isValidated ? "Validee" : "Brouillon"}

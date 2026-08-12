@@ -42,6 +42,7 @@ const invoiceSchema = new mongoose.Schema(
     bankIban: { type: String, default: "", trim: true },
     bankSwift: { type: String, default: "", trim: true },
     amount: { type: Number, default: 0 },
+    remisePercent: { type: Number, default: 0, min: 0, max: 100 },
     isValidated: { type: Boolean, default: false },
     date: { type: Date, required: true },
     lines: [

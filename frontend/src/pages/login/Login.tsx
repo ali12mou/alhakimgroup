@@ -1,5 +1,7 @@
 import { useState, type FormEvent } from "react";
+import { useTranslation } from "react-i18next";
 import { LogIn } from "lucide-react";
+import LanguageSwitcher from "../../components/LanguageSwitcher/LanguageSwitcher";
 import "./Login.css";
 
 type LoginProps = {
@@ -7,6 +9,7 @@ type LoginProps = {
 };
 
 export default function Login({ onLogin }: LoginProps) {
+  const { t } = useTranslation();
   const [email, setEmail] = useState("admin@geosomtech.com");
   const [password, setPassword] = useState("admin123");
   const [error, setError] = useState("");
@@ -23,7 +26,7 @@ export default function Login({ onLogin }: LoginProps) {
         err && typeof err === "object" && "response" in err
           ? String((err as { response?: { data?: { message?: string } } }).response?.data?.message || "")
           : "";
-      setError(message || "Connexion impossible. Verifiez vos identifiants.");
+      setError(message || t("login.error"));
     } finally {
       setLoading(false);
     }
@@ -33,14 +36,14 @@ export default function Login({ onLogin }: LoginProps) {
     <div className="login-page">
       <div className="login-card">
         <div className="login-brand">
-          <h1>AL-HAKIM GROUP</h1>
-          <p>L&apos;excellence au service de vos projets.</p>
+          <h1>{t("common.brand")}</h1>
+          <p>{t("common.slogan")}</p>
         </div>
-        <h2>Connexion</h2>
-        <p className="login-hint">Accedez a votre espace CRM &amp; Ventes.</p>
+        <h2>{t("login.title")}</h2>
+        <p className="login-hint">{t("login.hint")}</p>
         <form onSubmit={(e) => void handleSubmit(e)} className="login-form">
           <label>
-            <span>Email</span>
+            <span>{t("common.email")}</span>
             <input
               type="email"
               autoComplete="username"
@@ -51,7 +54,7 @@ export default function Login({ onLogin }: LoginProps) {
             />
           </label>
           <label>
-            <span>Mot de passe</span>
+            <span>{t("common.password")}</span>
             <input
               type="password"
               autoComplete="current-password"
@@ -64,10 +67,11 @@ export default function Login({ onLogin }: LoginProps) {
           {error ? <p className="login-error">{error}</p> : null}
           <button type="submit" className="login-submit" disabled={loading}>
             <LogIn size={16} />
-            {loading ? "Connexion..." : "Se connecter"}
+            {loading ? t("login.submitting") : t("login.submit")}
           </button>
         </form>
-        <p className="login-footer">Compte demo : admin@geosomtech.com / admin123</p>
+        <LanguageSwitcher variant="login" />
+        <p className="login-footer">{t("login.demo")}</p>
       </div>
     </div>
   );

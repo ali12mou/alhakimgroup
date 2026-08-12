@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   BarChart3,
   BarChart4,
   ClipboardList,
-  ExternalLink,
   Globe,
   LayoutGrid,
   LogIn,
@@ -34,6 +34,7 @@ import { api } from "./services/apiService";
 import { useAuth } from "./hooks/useAuth";
 import LoginPage from "./pages/login/Login";
 import ProfilPage from "./pages/profil/Profil";
+import LanguageSwitcher from "./components/LanguageSwitcher/LanguageSwitcher";
 import type {
   Bank,
   Client,
@@ -102,11 +103,11 @@ function toggleActivityCategory(categories: string[], category: string, checked:
   return categories.filter((c) => c !== category);
 }
 
-function clientEntityNameLabel(type: ClientType): string {
-  if (type === "Gouvernemental") return "Nom de l'institution gouvernementale *";
-  if (type === "Organisation") return "Nom de l'organisation *";
-  if (type === "Particulier") return "Nom du particulier *";
-  return "Nom de l'entreprise *";
+function clientEntityNameKey(type: ClientType): string {
+  if (type === "Gouvernemental") return "clients.entityGov";
+  if (type === "Organisation") return "clients.entityOrg";
+  if (type === "Particulier") return "clients.entityPerson";
+  return "clients.entityCompany";
 }
 
 function nextServiceCode(existing: Array<{ code: string }>) {
@@ -160,19 +161,20 @@ function defaultBankSelectValue(s: Setting) {
 }
 
 const navItems = [
-  { key: "dashboard" as Tab, label: "Tableau de bord", icon: LayoutGrid },
-  { key: "clients" as Tab, label: "Clients", icon: Users },
-  { key: "suivis" as Tab, label: "Suivis clients", icon: ClipboardList },
-  { key: "rapports" as Tab, label: "Rapports", icon: BarChart3 },
-  { key: "paiement-facture" as Tab, label: "Paiement facture", icon: HandCoins },
-  { key: "facture" as Tab, label: "Facture", icon: FileText },
-  { key: "proforma" as Tab, label: "Proforma", icon: FileSpreadsheet },
-  { key: "service" as Tab, label: "Service", icon: BriefcaseBusiness },
-  { key: "depenses" as Tab, label: "Depenses", icon: Wallet },
-  { key: "parametres" as Tab, label: "Parametres", icon: SettingsIcon }
+  { key: "dashboard" as Tab, labelKey: "nav.dashboard", icon: LayoutGrid },
+  { key: "clients" as Tab, labelKey: "nav.clients", icon: Users },
+  { key: "suivis" as Tab, labelKey: "nav.followups", icon: ClipboardList },
+  { key: "rapports" as Tab, labelKey: "nav.reports", icon: BarChart3 },
+  { key: "paiement-facture" as Tab, labelKey: "nav.invoicePayment", icon: HandCoins },
+  { key: "facture" as Tab, labelKey: "nav.invoice", icon: FileText },
+  { key: "proforma" as Tab, labelKey: "nav.proforma", icon: FileSpreadsheet },
+  { key: "service" as Tab, labelKey: "nav.service", icon: BriefcaseBusiness },
+  { key: "depenses" as Tab, labelKey: "nav.expenses", icon: Wallet },
+  { key: "parametres" as Tab, labelKey: "nav.settings", icon: SettingsIcon }
 ];
 
 export default function App() {
+  const { t } = useTranslation();
   const { user, isAuthenticated, login, logout, refreshUser } = useAuth();
   const [tab, setTab] = useState<Tab>("dashboard");
   const [authView, setAuthView] = useState<"app" | "login">("app");
@@ -227,6 +229,7 @@ export default function App() {
       bankIban?: string;
       bankSwift?: string;
       amount?: number;
+      remisePercent?: number;
       date: string;
       paymentStatus: string;
       paymentMethod: string;
@@ -931,8 +934,8 @@ export default function App() {
 
   const currentNavLabel =
     tab === "profil"
-      ? "Profil"
-      : navItems.find((n) => n.key === tab)?.label ?? "AL-HAKIM GROUP";
+      ? t("nav.profile")
+      : t(navItems.find((n) => n.key === tab)?.labelKey ?? "common.brand");
 
   if (!isAuthenticated || authView === "login") {
     return (
@@ -951,19 +954,19 @@ export default function App() {
       <button
         type="button"
         className="sidebar-backdrop"
-        aria-label="Fermer le menu"
+        aria-label={t("common.closeMenu")}
         onClick={() => setNavOpen(false)}
       />
-      <aside className="sidebar" aria-label="Navigation principale">
+      <aside className="sidebar" aria-label={t("common.mainNav")}>
         <div className="sidebar-head">
           <div className="sidebar-brand">
-            <h2>AL-HAKIM GROUP</h2>
-            <p>CRM & VENTES</p>
+            <h2>{t("common.brand")}</h2>
+            <p>{t("common.tagline")}</p>
           </div>
           <button
             type="button"
             className="sidebar-close-btn"
-            aria-label="Fermer le menu"
+            aria-label={t("common.closeMenu")}
             onClick={() => setNavOpen(false)}
           >
             <X size={22} />
@@ -984,15 +987,16 @@ export default function App() {
               >
                 <span className="nav-item">
                   <Icon size={16} className="nav-icon" />
-                  <span>{item.label}</span>
+                  <span>{t(item.labelKey)}</span>
                 </span>
               </button>
             );
           })}
         </nav>
+        <LanguageSwitcher variant="sidebar" />
         <div className="sidebar-footer">
           <div className="sidebar-user">
-            <strong>{user?.fullName || "Utilisateur"}</strong>
+            <strong>{user?.fullName || t("common.user")}</strong>
             <span>{user?.role?.name || user?.email || ""}</span>
           </div>
           <button
@@ -1005,7 +1009,7 @@ export default function App() {
           >
             <span className="nav-item">
               <UserRound size={16} className="nav-icon" />
-              <span>Profil</span>
+              <span>{t("nav.profile")}</span>
             </span>
           </button>
           <button
@@ -1018,7 +1022,7 @@ export default function App() {
           >
             <span className="nav-item">
               <LogOut size={16} className="nav-icon" />
-              <span>Deconnexion</span>
+              <span>{t("nav.logout")}</span>
             </span>
           </button>
           <button
@@ -1031,7 +1035,7 @@ export default function App() {
           >
             <span className="nav-item">
               <LogIn size={16} className="nav-icon" />
-              <span>Login</span>
+              <span>{t("nav.login")}</span>
             </span>
           </button>
         </div>
@@ -1042,7 +1046,7 @@ export default function App() {
           <button
             type="button"
             className="mobile-menu-btn"
-            aria-label="Ouvrir le menu"
+            aria-label={t("common.openMenu")}
             onClick={() => setNavOpen(true)}
           >
             <Menu size={22} />
@@ -1067,8 +1071,8 @@ export default function App() {
           <section className="clients-page">
             <header className="clients-header">
               <div>
-                <h1>Clients</h1>
-                <p>{clients.length} clients enregistres</p>
+                <h1>{t("clients.title")}</h1>
+                <p>{t("clients.count", { count: clients.length })}</p>
               </div>
               <button
                 type="button"
@@ -1080,16 +1084,16 @@ export default function App() {
                 }}
               >
                 <Plus size={16} />
-                Nouveau client
+                {t("clients.new")}
               </button>
             </header>
 
             {showNewClientForm && (
               <div className="settings-panel clients-new-panel">
-                <h2>{editingClientId ? "Modifier le client" : "Nouveau client"}</h2>
+                <h2>{editingClientId ? t("clients.edit") : t("clients.new")}</h2>
                 <div className="settings-form-grid">
                   <label>
-                    <span>Type de client *</span>
+                    <span>{t("clients.clientType")} *</span>
                     <select
                       value={newClientForm.clientType}
                       onChange={(e) =>
@@ -1099,14 +1103,14 @@ export default function App() {
                         }))
                       }
                     >
-                      <option value="Organisation">Organisation</option>
-                      <option value="Gouvernemental">Gouvernemental</option>
-                      <option value="Entreprise">Entreprise</option>
-                      <option value="Particulier">Particulier</option>
+                      <option value="Organisation">{t("clients.organisation")}</option>
+                      <option value="Gouvernemental">{t("clients.governmental")}</option>
+                      <option value="Entreprise">{t("clients.company")}</option>
+                      <option value="Particulier">{t("clients.individual")}</option>
                     </select>
                   </label>
                   <label>
-                    <span>{clientEntityNameLabel(newClientForm.clientType)}</span>
+                    <span>{t(clientEntityNameKey(newClientForm.clientType))}</span>
                     <input
                       value={newClientForm.name}
                       onChange={(e) => setNewClientForm((f) => ({ ...f, name: e.target.value }))}
@@ -1119,7 +1123,7 @@ export default function App() {
                     />
                   </label>
                   <label>
-                    <span>Nom de la personne de contact *</span>
+                    <span>{t("clients.contactName")} *</span>
                     <input
                       value={newClientForm.contactName}
                       onChange={(e) =>
@@ -1139,7 +1143,7 @@ export default function App() {
                     />
                   </label>
                   <label>
-                    <span>Telephone</span>
+                    <span>{t("common.phone")}</span>
                     <input
                       value={newClientForm.phone}
                       onChange={(e) => setNewClientForm((f) => ({ ...f, phone: e.target.value }))}
@@ -1147,27 +1151,27 @@ export default function App() {
                     />
                   </label>
                   <label className="span-2">
-                    <span>Localisation</span>
+                    <span>{t("clients.location")}</span>
                     <input
                       value={newClientForm.location}
                       onChange={(e) => setNewClientForm((f) => ({ ...f, location: e.target.value }))}
                     />
                   </label>
                   <label>
-                    <span>Statut</span>
+                    <span>{t("common.status")}</span>
                     <select
                       value={newClientForm.status}
                       onChange={(e) =>
                         setNewClientForm((f) => ({ ...f, status: e.target.value as ClientStatus }))
                       }
                     >
-                      <option value="Actif">Actif</option>
-                      <option value="Prospect">Prospect</option>
-                      <option value="Inactif">Inactif</option>
+                      <option value="Actif">{t("common.active")}</option>
+                      <option value="Prospect">{t("common.prospect")}</option>
+                      <option value="Inactif">{t("common.inactive")}</option>
                     </select>
                   </label>
                   <label>
-                    <span>Service (designation)</span>
+                    <span>{t("clients.serviceDesignation")}</span>
                     <select
                       value={newClientForm.serviceId}
                       onChange={(e) => {
@@ -1178,7 +1182,7 @@ export default function App() {
                         }));
                       }}
                     >
-                      <option value="">Aucun service</option>
+                      <option value="">{t("clients.noService")}</option>
                       {groupServicesByCategory(
                         newClientForm.activityCategories.length
                           ? services.filter((s) =>
@@ -1197,7 +1201,7 @@ export default function App() {
                     </select>
                   </label>
                   <div className="span-2 clients-activity-block">
-                    <span className="clients-activity-label">Domaines d&apos;activite</span>
+                    <span className="clients-activity-label">{t("clients.activityDomains")}</span>
                     <div className="clients-activity-checks">
                       {CLIENT_ACTIVITY_CATEGORIES.map((category) => (
                         <label key={category} className="check-row">
@@ -1254,7 +1258,7 @@ export default function App() {
               <label className="search-box">
                 <Search size={16} />
                 <input
-                  placeholder="Rechercher par entite, contact ou type..."
+                  placeholder={t("clients.searchPlaceholder")}
                   value={clientSearch}
                   onChange={(e) => setClientSearch(e.target.value)}
                 />
@@ -1263,12 +1267,12 @@ export default function App() {
                 className="status-filter"
                 value={clientStatusFilter}
                 onChange={(e) => setClientStatusFilter(e.target.value)}
-                title="Filtrer par statut"
+                title={t("common.status")}
               >
-                <option value="">Tous les statuts</option>
-                <option value="Actif">Actif</option>
-                <option value="Prospect">Prospect</option>
-                <option value="Inactif">Inactif</option>
+                <option value="">{t("common.allStatuses")}</option>
+                <option value="Actif">{t("common.active")}</option>
+                <option value="Prospect">{t("common.prospect")}</option>
+                <option value="Inactif">{t("common.inactive")}</option>
               </select>
             </div>
 
@@ -1276,13 +1280,13 @@ export default function App() {
             <table className="crm-data-table">
               <thead>
                 <tr>
-                  <th>Type</th>
-                  <th>Entite / client</th>
-                  <th>Personne de contact</th>
-                  <th>Domaines d&apos;activite</th>
-                  <th>Service</th>
-                  <th>Statut</th>
-                  <th>Actions</th>
+                  <th>{t("clients.type")}</th>
+                  <th>{t("clients.entity")}</th>
+                  <th>{t("clients.contactPerson")}</th>
+                  <th>{t("clients.activityDomains")}</th>
+                  <th>{t("clients.service")}</th>
+                  <th>{t("common.status")}</th>
+                  <th>{t("common.actions")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -1307,19 +1311,19 @@ export default function App() {
                     <td><span className="status-pill">{client.status}</span></td>
                     <td>
                       <div className="actions">
-                        <button title="Imprimer" onClick={() => printClient(client)}>
+                        <button title={t("common.print")} onClick={() => printClient(client)}>
                           <Printer size={15} />
                         </button>
-                        <button title="Exporter fiche PDF" onClick={() => exportClientPdf(client)}>
+                        <button title={t("reports.exportPdf")} onClick={() => exportClientPdf(client)}>
                           <FileDown size={15} />
                         </button>
-                        <button title="Voir" onClick={() => setSelectedClient(client)}>
+                        <button title={t("common.view")} onClick={() => setSelectedClient(client)}>
                           <Eye size={15} />
                         </button>
-                        <button title="Modifier" onClick={() => openEditClient(client)}>
+                        <button title={t("common.edit")} onClick={() => openEditClient(client)}>
                           <Pencil size={15} />
                         </button>
-                        <button title="Supprimer" onClick={() => void deleteClient(client._id)}>
+                        <button title={t("common.delete")} onClick={() => void deleteClient(client._id)}>
                           <Trash2 size={15} />
                         </button>
                       </div>
@@ -1389,37 +1393,37 @@ export default function App() {
           <section className="reports-page">
             <header className="reports-header">
               <div>
-                <h1>Rapports</h1>
-                <p>Rapport executif professionnel - AL-HAKIM GROUP</p>
+                <h1>{t("reports.title")}</h1>
+                <p>{t("reports.subtitle")}</p>
               </div>
               <div className="reports-export-actions">
                 <button className="reports-export-btn" onClick={exportReportPdf}>
-                  Exporter PDF Pro
+                  {t("reports.exportPdf")}
                 </button>
                 <button className="reports-export-btn" onClick={exportReportExcel}>
-                  Exporter Excel Pro
+                  {t("reports.exportExcel")}
                 </button>
                 <button className="reports-export-btn reports-export-btn--light" onClick={exportReportCsv}>
-                  Exporter CSV
+                  {t("reports.exportCsv")}
                 </button>
               </div>
             </header>
 
             <section className="reports-kpis">
               <article className="report-card">
-                <h4>CA Total Developpement</h4>
+                <h4>{t("dashboard.revenue")}</h4>
                 <p>{formatMoney(dashboard.caDevelopment, settings.currency)}</p>
               </article>
               <article className="report-card">
-                <h4>CA Annuel Recurrent</h4>
+                <h4>{t("dashboard.revenue")}</h4>
                 <p>{formatMoney(dashboard.caAnnual, settings.currency)}</p>
               </article>
               <article className="report-card">
-                <h4>Total clients</h4>
+                <h4>{t("dashboard.totalClients")}</h4>
                 <p>{dashboard.totalClients}</p>
               </article>
               <article className="report-card">
-                <h4>Total suivis</h4>
+                <h4>{t("dashboard.followups")}</h4>
                 <p>{dashboard.totalFollowUps}</p>
               </article>
             </section>
@@ -1532,19 +1536,19 @@ export default function App() {
           <section className="settings-page">
             <header className="settings-page-header">
               <div>
-                <h1>Parametres</h1>
-                <p>Configuration entreprise, roles et utilisateurs.</p>
+                <h1>{t("settings.title")}</h1>
+                <p>{t("settings.configuration")}</p>
               </div>
             </header>
 
-            <nav className="settings-subnav" aria-label="Sous-sections parametres">
+            <nav className="settings-subnav" aria-label={t("settings.title")}>
               <button
                 type="button"
                 className={parametresSub === "configuration" ? "active" : ""}
                 onClick={() => setParametresSub("configuration")}
               >
                 <SettingsIcon size={16} />
-                Configuration
+                {t("settings.configuration")}
               </button>
               <button
                 type="button"
@@ -1552,7 +1556,7 @@ export default function App() {
                 onClick={() => setParametresSub("banks")}
               >
                 <Wallet size={16} />
-                Banques
+                {t("settings.banks")}
               </button>
               <button
                 type="button"
@@ -1560,7 +1564,7 @@ export default function App() {
                 onClick={() => setParametresSub("roles")}
               >
                 <Shield size={16} />
-                Roles
+                {t("settings.roles")}
               </button>
               <button
                 type="button"
@@ -1568,7 +1572,7 @@ export default function App() {
                 onClick={() => setParametresSub("permissions")}
               >
                 <KeyRound size={16} />
-                Permissions
+                {t("settings.permissions")}
               </button>
               <button
                 type="button"
@@ -1576,13 +1580,13 @@ export default function App() {
                 onClick={() => setParametresSub("users")}
               >
                 <UserCog size={16} />
-                Utilisateurs
+                {t("settings.users")}
               </button>
             </nav>
 
             {parametresSub === "configuration" && (
               <div className="settings-panel">
-                <h2>Configuration entreprise</h2>
+                <h2>{t("settings.configuration")}</h2>
                 <p className="settings-hint">
                   Ces informations sont enregistrees en base et reutilisees sur les apercus factures, exports PDF et
                   documents.
@@ -2164,21 +2168,21 @@ export default function App() {
           <section className="service-page">
             <header className="clients-header">
               <div>
-                <h1>Service</h1>
-                <p>{services.length} services enregistres</p>
+                <h1>{t("services.title")}</h1>
+                <p>{t("services.count", { count: services.length })}</p>
               </div>
               <button className="new-client-btn" type="button" onClick={openNewServiceForm}>
                 <Plus size={16} />
-                Nouveau service
+                {t("services.new")}
               </button>
             </header>
 
             {showServiceForm && (
               <div className="settings-panel clients-new-panel">
-                <h2>{editingServiceId ? "Modifier le service" : "Nouveau service"}</h2>
+                <h2>{editingServiceId ? t("services.edit") : t("services.new")}</h2>
                 <div className="settings-form-grid">
                   <label className="span-2">
-                    <span>Designation *</span>
+                    <span>{t("services.designation")} *</span>
                     <input
                       value={serviceForm.name}
                       onChange={(e) => setServiceForm((f) => ({ ...f, name: e.target.value }))}
