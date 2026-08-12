@@ -1,0 +1,118 @@
+/**
+ * Tables de donnees AL-HAKIM GROUP — meme rendu sur toutes les pages
+ * Classe principale : .crm-data-table
+ */
+
+.table-responsive--bordered {
+  margin-top: 0.5rem;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+}
+
+.invoice-list-card > .table-responsive {
+  border: none;
+  border-radius: 0;
+  margin-top: 0;
+  background: transparent;
+}
+
+.table-responsive .crm-data-table {
+  min-width: 640px;
+}
+
+.table-responsive .crm-data-table.crm-data-table--settings {
+  min-width: 480px;
+}
+
+.table-responsive .crm-data-table.crm-data-table--list {
+  min-width: 720px;
+}
+
+.crm-data-table--settings {
+  margin-top: 8px;
+}
+
+.crm-data-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #fff;
+  font-size: 0.9rem;
+  color: #0f172a;
+}
+
+.crm-data-table thead th {
+  text-align: left;
+  padding: 0.75rem 1rem;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #64748b;
+  background: linear-gradient(180deg, #f8fafc 0%, #eef2f7 100%);
+  border-bottom: 2px solid #e2e8f0;
+  white-space: nowrap;
+}
+
+.crm-data-table tbody td {
+  padding: 0.8rem 1rem;
+  border-bottom: 1px solid #f1f5f9;
+  vertical-align: middle;
+}
+
+.crm-data-table tbody tr:nth-child(even) {
+  background: #fafbfc;
+}
+
+.crm-data-table tbody tr:hover {
+  background: #f0fdf4;
+}
+
+.crm-data-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.crm-data-table tfoot td,
+.crm-data-table .totals-row td {
+  font-weight: 600;
+  background: #f1f5f9;
+  border-top: 2px solid #e2e8f0;
+  border-bottom: none;
+  color: #0f172a;
+}
+
+.crm-data-table--list thead th {
+  background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+}
+
+.crm-mono-id {
+  font-family: ui-monospace, "Cascadia Code", monospace;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #334155;
+}
+
+.crm-empty {
+  text-align: center;
+  color: #64748b;
+  padding: 2rem 1rem !important;
+  font-size: 0.9rem;
+  font-weight: 500;
+  background: #fafbfc !important;
+}
+
+.suivis-table .suivis-cell-text {
+  max-width: 200px;
+  font-size: 13px;
+  vertical-align: top;
+  word-break: break-word;
+}
+
+@media (max-width: 900px) {
+  .crm-data-table thead th {
+    padding: 0.65rem 0.75rem;
+  }
+  .crm-data-table tbody td {
+    padding: 0.65rem 0.75rem;
+  }
+}

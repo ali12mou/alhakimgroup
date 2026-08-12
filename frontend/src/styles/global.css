@@ -1,0 +1,21 @@
+@import "./brand.css";
+@import "../App.css";
+@import "./data-tables.css";
+
+/* Styles globaux de l'application */
+html {
+  -webkit-text-size-adjust: 100%;
+}
+body {
+  overflow-x: hidden;
+  background: var(--brand-surface);
+  color: var(--brand-text);
+}
+body.nav-drawer-open {
+  overflow: hidden;
+}
+@media (min-width: 901px) {
+  body.nav-drawer-open {
+    overflow: auto;
+  }
+}

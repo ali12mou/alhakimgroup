@@ -1,0 +1,371 @@
+/* Pages Depenses — aligne maquettes (toolbar, boutons bleus, pagination) */
+.depenses-page {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.depenses-card {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 1.25rem 1.35rem 1.5rem;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+.depenses-card-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.1rem;
+}
+
+.depenses-card-head h2 {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.depenses-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.depenses-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.55rem 1rem;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  white-space: nowrap;
+}
+
+.depenses-btn--primary {
+  background: #2563eb;
+  color: #fff;
+}
+
+.depenses-btn--primary:hover {
+  background: #1d4ed8;
+}
+
+.depenses-btn--secondary {
+  background: #1e40af;
+  color: #fff;
+}
+
+.depenses-btn--secondary:hover {
+  background: #1e3a8a;
+}
+
+.depenses-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.85rem;
+  font-size: 0.875rem;
+  color: #64748b;
+}
+
+.depenses-toolbar-left {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.depenses-toolbar-left select {
+  width: 4rem;
+  padding: 0.35rem 0.5rem;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 0.875rem;
+}
+
+.depenses-search {
+  min-width: 200px;
+  max-width: 280px;
+  flex: 1;
+}
+
+.depenses-search input {
+  width: 100%;
+  padding: 0.45rem 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 0.875rem;
+}
+
+.depenses-search input::placeholder {
+  color: #94a3b8;
+}
+
+.depenses-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-top: 0.85rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid #f1f5f9;
+  font-size: 0.8125rem;
+  color: #94a3b8;
+}
+
+.depenses-pagination {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.depenses-pagination button {
+  min-width: 2rem;
+  height: 2rem;
+  padding: 0 0.5rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  background: #fff;
+  color: #475569;
+  cursor: pointer;
+  font-size: 0.8125rem;
+}
+
+.depenses-pagination button:hover:not(:disabled) {
+  background: #f8fafc;
+}
+
+.depenses-pagination button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.depenses-pagination .depenses-page-current {
+  font-weight: 700;
+  border-color: #2563eb;
+  color: #2563eb;
+}
+
+.depenses-icon-actions {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  align-items: center;
+}
+
+.depenses-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  cursor: pointer;
+  color: #64748b;
+}
+
+.depenses-icon-btn:hover {
+  background: #f1f5f9;
+}
+
+.depenses-icon-btn--edit {
+  color: var(--brand-royal);
+}
+
+.depenses-icon-btn--delete {
+  color: #dc2626;
+}
+
+.depenses-icon-btn--view {
+  color: #2563eb;
+}
+
+.depenses-icon-btn--print {
+  color: #334155;
+}
+
+.depenses-icon-btn--approve {
+  color: var(--brand-royal);
+}
+
+.depenses-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.depenses-badge--approved {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.depenses-badge--pending {
+  background: #ede9fe;
+  color: #6d28d9;
+}
+
+.depenses-badge--allocation {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.depenses-locked {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.8125rem;
+  color: #64748b;
+}
+
+.depenses-add-form {
+  margin-bottom: 1rem;
+  padding: 1rem;
+  background: #f8fafc;
+  border: 1px dashed #cbd5e1;
+  border-radius: 10px;
+  display: grid;
+  gap: 0.75rem;
+}
+
+.depenses-add-form label > span {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #64748b;
+  margin-bottom: 0.25rem;
+}
+
+.depenses-add-form input,
+.depenses-add-form select,
+.depenses-add-form textarea {
+  width: 100%;
+  max-width: 320px;
+  padding: 0.45rem 0.65rem;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  background: #fff;
+  font: inherit;
+}
+
+.depenses-add-form textarea {
+  max-width: 660px;
+  resize: vertical;
+}
+
+.depenses-form-wide {
+  grid-column: 1 / -1;
+}
+
+.depenses-bank-account {
+  display: block;
+  margin-top: 0.15rem;
+  color: #64748b;
+}
+
+.depenses-detail {
+  margin-bottom: 1rem;
+  padding: 1rem;
+  border: 1px solid #bfdbfe;
+  border-radius: 10px;
+  background: #eff6ff;
+}
+
+.depenses-detail-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.85rem;
+}
+
+.depenses-detail-head h3,
+.depenses-add-form h3 {
+  margin: 0;
+  color: #1e293b;
+  font-size: 1rem;
+}
+
+.depenses-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.depenses-detail-grid > div {
+  padding: 0.7rem;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.depenses-detail-grid span,
+.depenses-detail-grid small {
+  display: block;
+  color: #64748b;
+  font-size: 0.75rem;
+}
+
+.depenses-detail-grid strong {
+  display: block;
+  margin-top: 0.2rem;
+  overflow-wrap: anywhere;
+}
+
+.depenses-detail-wide {
+  grid-column: 1 / -1;
+}
+
+.depenses-add-form-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.depenses-btn--ghost {
+  background: #fff;
+  color: #475569;
+  border: 1px solid #e5e7eb;
+}
+
+@media (max-width: 640px) {
+  .depenses-detail-grid {
+    grid-template-columns: 1fr;
+  }
+  .depenses-detail-wide {
+    grid-column: auto;
+  }
+  .depenses-card-head {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .depenses-actions {
+    width: 100%;
+  }
+  .depenses-actions .depenses-btn {
+    flex: 1;
+    justify-content: center;
+  }
+  .depenses-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .depenses-search {
+    max-width: none;
+  }
+}
+

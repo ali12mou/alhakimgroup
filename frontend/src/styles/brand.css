@@ -1,0 +1,27 @@
+/**
+ * Palette marque AL-HAKIM GROUP
+ * Bleu marine principal · Bleu nuit · Bleu royal · Gris
+ */
+:root {
+  --brand-navy: #101c4e;
+  --brand-night: #040d38;
+  --brand-royal: #0431a6;
+  --brand-gray-mid: #9b9eac;
+  --brand-gray-blue: #505670;
+  --brand-gray-light: #b2b7c6;
+  --brand-white: #ffffff;
+
+  --brand-primary: var(--brand-navy);
+  --brand-primary-dark: var(--brand-night);
+  --brand-accent: var(--brand-royal);
+  --brand-muted: var(--brand-gray-blue);
+  --brand-border: var(--brand-gray-light);
+  --brand-surface: #f4f5f8;
+  --brand-surface-alt: #eef0f5;
+  --brand-text: var(--brand-navy);
+  --brand-text-muted: var(--brand-gray-blue);
+
+  --brand-gradient: linear-gradient(135deg, var(--brand-navy) 0%, var(--brand-night) 55%, var(--brand-royal) 140%);
+  --brand-shadow: 0 8px 24px rgba(16, 28, 78, 0.18);
+  --brand-focus-ring: 0 0 0 3px rgba(4, 49, 166, 0.22);
+}
