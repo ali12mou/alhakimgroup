@@ -8,7 +8,7 @@ import { formatMoney } from "../../utils";
 type InvoiceRow = {
   _id: string;
   invoiceId: string;
-  invoiceType?: "Service" | "Domaine";
+  invoiceType?: "Service" | "Domaine" | string;
   client?: string | { _id: string };
   clientName: string;
   company: string;
@@ -27,6 +27,8 @@ type InvoiceRow = {
   lines?: Array<{
     designation: string;
     description: string;
+    category?: string;
+    unite?: string;
     quantite: number;
     prixUnitaire: number;
     montant: number;

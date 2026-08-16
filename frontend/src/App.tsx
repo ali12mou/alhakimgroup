@@ -215,7 +215,7 @@ export default function App() {
       _id: string;
       invoiceId: string;
       reference: string;
-      invoiceType?: string;
+      invoiceType?: "Service" | "Domaine" | string;
       client?: string | { _id: string };
       clientName: string;
       company: string;
@@ -237,6 +237,10 @@ export default function App() {
       lines?: Array<{
         designation: string;
         description: string;
+        category: string;
+        unite: "U" | "m" | "m²";
+        largeur?: number;
+        longueur?: number;
         quantite: number;
         prixUnitaire: number;
         montant: number;
@@ -529,7 +533,7 @@ export default function App() {
     reportClientRows.forEach((row) => {
       rows.push([
         row.client,
-        row.domaine,
+        row.domaine ?? "",
         row.statut,
         row.hosting,
         row.maintenance,
@@ -597,7 +601,7 @@ export default function App() {
       ]],
       body: reportClientRows.map((row) => [
         row.client,
-        row.domaine,
+        row.domaine ?? "",
         row.statut,
         row.hosting,
         row.maintenance,

@@ -370,7 +370,7 @@ export default function Factures({
       return;
     }
 
-    const { subtotal: _sub, remisePercent, net } = calcInvoiceTotals(lignes, form.remisePercent);
+    const { remisePercent, net } = calcInvoiceTotals(lignes, form.remisePercent);
     const bankId = form.bankId || defaultBankId();
     const bank = banks.find((b) => b._id === bankId);
     const companyBank = resolveCompanyBank(settings, banks);
