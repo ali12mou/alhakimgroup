@@ -78,8 +78,7 @@
     "hint": "Access your CRM & Sales workspace.",
     "submit": "Sign in",
     "submitting": "Signing in...",
-    "error": "Unable to sign in. Check your credentials.",
-    "demo": "Demo account: admin@geosomtech.com / admin123"
+    "error": "Unable to sign in. Check your credentials."
   },
   "clients": {
     "title": "Clients",

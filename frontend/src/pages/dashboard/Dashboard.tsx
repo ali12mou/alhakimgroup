@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { cloneElement, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactElement } from "react";
 import { useTranslation } from "react-i18next";
 import {
   Bar,
@@ -8,7 +8,6 @@ import {
   Legend,
   Pie,
   PieChart,
-  ResponsiveContainer,
   Tooltip,
   XAxis,
   YAxis
@@ -180,6 +179,41 @@ function formatConnectedAt(iso: string): string {
   });
 }
 
+/** Attend des dimensions réelles avant de monter Recharts (évite width/height -1). */
+function ChartFrame({ compact, children }: { compact?: boolean; children: ReactElement<{ width?: number; height?: number }> }) {
+  const hostRef = useRef<HTMLDivElement>(null);
+  const [box, setBox] = useState({ w: 0, h: 0 });
+
+  useLayoutEffect(() => {
+    const el = hostRef.current;
+    if (!el) return;
+
+    const measure = () => {
+      const w = Math.round(el.clientWidth);
+      const h = Math.round(el.clientHeight);
+      setBox((prev) => (prev.w === w && prev.h === h ? prev : { w, h }));
+    };
+
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => {
+      ro.disconnect();
+    };
+  }, []);
+
+  const ready = box.w > 8 && box.h > 8;
+
+  return (
+    <div
+      ref={hostRef}
+      className={`dash-chart-inner${compact ? " dash-chart-inner--compact" : ""}`}
+    >
+      {ready ? cloneElement(children, { width: box.w, height: box.h }) : null}
+    </div>
+  );
+}
+
 export default function DashboardPage({ onNavigate }: Props) {
   const { t } = useTranslation();
   const [dashboard, setDashboard] = useState<Dashboard>(demoDashboard);
@@ -230,7 +264,7 @@ export default function DashboardPage({ onNavigate }: Props) {
 
   const maxTopClientDev = useMemo(() => {
     const devs = dashboard.topClients.map((c) => c.dev);
-    return devs.length ? Math.max(...devs) : 1;
+    return Math.max(1, ...(devs.length ? devs : [1]));
   }, [dashboard]);
 
   const statusPieData = useMemo(
@@ -444,8 +478,7 @@ export default function DashboardPage({ onNavigate }: Props) {
           {statusTotal === 0 ? (
             <div className="dash-chart-empty">Aucun client a afficher.</div>
           ) : (
-            <div className="dash-chart-inner dash-chart-inner--compact">
-              <ResponsiveContainer width="100%" height="100%">
+            <ChartFrame compact>
                 <PieChart>
                   <Pie
                     data={statusPieData}
@@ -472,8 +505,7 @@ export default function DashboardPage({ onNavigate }: Props) {
                   <Tooltip formatter={(value) => [String(value ?? 0), "Clients"]} />
                   <Legend wrapperStyle={{ fontSize: "12px" }} />
                 </PieChart>
-              </ResponsiveContainer>
-            </div>
+            </ChartFrame>
           )}
         </div>
 
@@ -487,9 +519,8 @@ export default function DashboardPage({ onNavigate }: Props) {
               Voir rapports
             </button>
           </div>
-          <div className="dash-chart-inner dash-chart-inner--compact">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={caBarData} margin={{ top: 8, right: 12, left: 4, bottom: 4 }}>
+          <ChartFrame compact>
+            <BarChart data={caBarData} margin={{ top: 8, right: 12, left: 4, bottom: 4 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
                 <XAxis dataKey="name" tick={{ fontSize: 11 }} interval={0} height={48} />
                 <YAxis tickFormatter={compactAxisValue} tick={{ fontSize: 11 }} width={44} />
@@ -501,8 +532,7 @@ export default function DashboardPage({ onNavigate }: Props) {
                 />
                 <Bar dataKey="montant" radius={[8, 8, 0, 0]} fill={BAR_PRIMARY} name="Montant" />
               </BarChart>
-            </ResponsiveContainer>
-          </div>
+          </ChartFrame>
         </div>
       </div>
 
@@ -539,9 +569,8 @@ export default function DashboardPage({ onNavigate }: Props) {
         <div className="dash-chart-card">
           <h3>Statuts des depenses</h3>
           <p className="dash-chart-desc">Repartition Approuve / En attente / Rejete</p>
-          <div className="dash-chart-inner dash-chart-inner--compact">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
+          <ChartFrame compact>
+            <PieChart>
                 <Pie
                   data={expenseStatusPie}
                   cx="50%"
@@ -563,16 +592,14 @@ export default function DashboardPage({ onNavigate }: Props) {
                 <Tooltip formatter={(value) => [String(value ?? 0), "Depenses"]} />
                 <Legend wrapperStyle={{ fontSize: "12px" }} />
               </PieChart>
-            </ResponsiveContainer>
-          </div>
+          </ChartFrame>
         </div>
 
         <div className="dash-chart-card">
           <h3>Montants depenses</h3>
           <p className="dash-chart-desc">Total, approuve, en attente et autres</p>
-          <div className="dash-chart-inner dash-chart-inner--compact">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={expenseAmountBars} margin={{ top: 8, right: 12, left: 4, bottom: 4 }}>
+          <ChartFrame compact>
+            <BarChart data={expenseAmountBars} margin={{ top: 8, right: 12, left: 4, bottom: 4 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
                 <XAxis dataKey="name" tick={{ fontSize: 11 }} />
                 <YAxis tickFormatter={compactAxisValue} tick={{ fontSize: 11 }} width={44} />
@@ -584,8 +611,7 @@ export default function DashboardPage({ onNavigate }: Props) {
                 />
                 <Bar dataKey="montant" radius={[8, 8, 0, 0]} fill={BAR_PRIMARY} name="Montant" />
               </BarChart>
-            </ResponsiveContainer>
-          </div>
+          </ChartFrame>
         </div>
       </div>
 
@@ -632,8 +658,7 @@ export default function DashboardPage({ onNavigate }: Props) {
           {topClientsBarData.length === 0 ? (
             <div className="dash-chart-empty">Aucune donnee.</div>
           ) : (
-            <div className="dash-chart-inner">
-              <ResponsiveContainer width="100%" height="100%">
+            <ChartFrame>
                 <BarChart
                   layout="vertical"
                   data={topClientsBarData}
@@ -654,8 +679,7 @@ export default function DashboardPage({ onNavigate }: Props) {
                   />
                   <Bar dataKey="dev" radius={[0, 6, 6, 0]} fill={BAR_SECONDARY} name="CA dev." />
                 </BarChart>
-              </ResponsiveContainer>
-            </div>
+            </ChartFrame>
           )}
         </div>
 
@@ -669,17 +693,15 @@ export default function DashboardPage({ onNavigate }: Props) {
               Voir services
             </button>
           </div>
-          <div className="dash-chart-inner">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={servicesBarData} margin={{ top: 8, right: 12, left: 4, bottom: 4 }}>
+          <ChartFrame>
+            <BarChart data={servicesBarData} margin={{ top: 8, right: 12, left: 4, bottom: 4 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
                 <XAxis dataKey="name" tick={{ fontSize: 11 }} />
                 <YAxis allowDecimals={false} tick={{ fontSize: 11 }} width={36} />
                 <Tooltip formatter={(v) => [String(v ?? 0), "Nombre"]} />
                 <Bar dataKey="count" radius={[8, 8, 0, 0]} fill={BAR_TERTIARY} name="Nombre" />
               </BarChart>
-            </ResponsiveContainer>
-          </div>
+          </ChartFrame>
         </div>
       </div>
 
@@ -730,8 +752,8 @@ export default function DashboardPage({ onNavigate }: Props) {
             </p>
           ) : (
             <ul className="dash-connection-list">
-              {recentConnections.map((c) => (
-                <li key={c.id}>
+              {recentConnections.map((c, index) => (
+                <li key={`${c.id}-${c.connectedAt}-${index}`}>
                   <div className="dash-connection-avatar" aria-hidden>
                     {(c.fullName || "?").slice(0, 1).toUpperCase()}
                   </div>

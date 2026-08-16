@@ -71,7 +71,6 @@ export default function Login({ onLogin }: LoginProps) {
           </button>
         </form>
         <LanguageSwitcher variant="login" />
-        <p className="login-footer">{t("login.demo")}</p>
       </div>
     </div>
   );

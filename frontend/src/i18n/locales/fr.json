@@ -78,8 +78,7 @@
     "hint": "Accédez à votre espace CRM & Ventes.",
     "submit": "Se connecter",
     "submitting": "Connexion...",
-    "error": "Connexion impossible. Vérifiez vos identifiants.",
-    "demo": "Compte démo : admin@geosomtech.com / admin123"
+    "error": "Connexion impossible. Vérifiez vos identifiants."
   },
   "clients": {
     "title": "Clients",
